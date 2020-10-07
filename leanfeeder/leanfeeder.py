@@ -10,7 +10,7 @@ import psycopg2
 from psycopg2 import errorcodes
 import fire
 
-from infer import inferPgTypes 
+from leanfeeder.infer import inferPgTypes 
 
 def inferSchema(file):
     reader = csv.reader(file)
@@ -18,7 +18,7 @@ def inferSchema(file):
     pgt = inferPgTypes(reader)
     return ", ".join([f"{name} {type}" for name,type in zip(header,pgt)])
 
-def main(uri,data,name = None,drop=True):
+def pushFile(uri,data,name = None,drop=True):
     if name is None:
         dataname = os.path.splitext(os.path.split(data)[-1])[0]
     else:
@@ -56,6 +56,3 @@ def main(uri,data,name = None,drop=True):
         c.copy_from(sio,dataname,sep=",",null = "")
 
         con.commit()
-
-if __name__ == "__main__":
-    fire.Fire(main)
