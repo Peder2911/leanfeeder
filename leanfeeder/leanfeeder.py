@@ -18,41 +18,33 @@ def inferSchema(file):
     pgt = inferPgTypes(reader)
     return ", ".join([f"{name} {type}" for name,type in zip(header,pgt)])
 
-def pushFile(uri,data,name = None,drop=True):
-    if name is None:
-        dataname = os.path.splitext(os.path.split(data)[-1])[0]
-    else:
-        dataname = name
+def push(c,fobj,dataname = "data",drop=True):
+    try:
+        con = psycopg2.connect(c)
+    except TypeError:
+        con = c
 
-    with closing(psycopg2.connect(uri)) as con:
-        c = con.cursor()
-        c.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=%s)",(dataname,))
-        exists = c.fetchone()[0]
+    c = con.cursor()
+    c.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=%s)",(dataname,))
+    exists = c.fetchone()[0]
+    sio = StringIO(fobj.read())
 
-        with open(data) as f:
-            """
-            Copy everything into a buffer to avoid repeated reads.
-            (necessary, because detailed type inference requires
-            needs the whole data set in memory, for data too big to
-            fit in memory, add data in chunks).
-            """
-            sio = StringIO(f.read())
+    if drop and exists:
+        print(f"Dropping existing table {dataname}")
+        c.execute(f"DROP TABLE IF EXISTS {dataname}")
+        exists = False
 
-        if drop and exists:
-            print(f"Dropping existing table {dataname}")
-            c.execute(f"DROP TABLE IF EXISTS {dataname}")
-            exists = False
-
-        if not exists:
-            print(f"Creating table {dataname}")
-            sio.seek(0)
-            schema = inferSchema(sio)
-            c.execute(f"CREATE TABLE {dataname} ({schema})")
-        else:
-            print(f"Appending to {dataname}")
-
+    if not exists:
+        print(f"Creating table {dataname}")
         sio.seek(0)
-        next(sio)
-        c.copy_from(sio,dataname,sep=",",null = "")
+        schema = inferSchema(sio)
+        c.execute(f"CREATE TABLE {dataname} ({schema})")
 
-        con.commit()
+    else:
+        print(f"Appending to {dataname}")
+
+    sio.seek(0)
+    next(sio)
+    c.copy_from(sio,dataname,sep=",",null = "")
+
+    con.commit()

@@ -1,0 +1,15 @@
+#! /usr/bin/env python
+
+from contextlib import closing
+import sys
+
+import fire
+import psycopg2
+
+from leanfeeder.leanfeeder import push
+
+def pushfile(uri,name="data",drop=True):
+    with closing(psycopg2.connect(uri)) as con:
+        push(con,sys.stdin,dataname=name,drop=drop)
+
+fire.Fire(pushfile)

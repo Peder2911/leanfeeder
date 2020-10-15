@@ -1,6 +1,0 @@
-#! /usr/bin/env python
-
-import fire
-from leanfeeder.leanfeeder import pushFile 
-
-fire.Fire(pushFile)
