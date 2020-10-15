@@ -14,10 +14,11 @@ setuptools.setup(
         long_description_content_type="test/markdown",
         url = "https://www.github.com/peder2911/leanfeeder",
         packages = setuptools.find_packages(),
-        scripts=["bin/leanfeeder"],
+        scripts=["bin/leanf"],
         python_requires=">=3.7",
         install_requires=[
-            "strconv==0.4.2",
-            "psycopg2==2.8.6",
-            "fire==0.3.1"
+            "strconv>=0.4.0",
+            "psycopg2>=2.8.0",
+            "fire>=0.3.0",
+            "python-dateutil>=2.8.0"
         ])
